@@ -1,18 +1,10 @@
-descStr = "Conway's game of life:" \
-       "Simulated by Python with predetermined or user defined starting points"
-
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
+import matplotlib.pyplot as plt
+import numpy as np
+import time
 
-
-#TODO:
-# ARGParse: let the user choose between: set the starting points or random points
-# IF choosen use a method to set up the board
-# DONE Build the board
-# DONE Populate the board (1 is on, 0 is off)
-# Method that updates the board on set of rules and repopulates the board
-# DONE Write the conway set of rules
+descStr = "Conway's game of life:" \
+       "Simulated by Python with randomized or user defined starting points"
 
 
 def create_array(col_len, row_len):
@@ -29,23 +21,22 @@ def random_bin_array(K, N):
 def convert_coordinates(x,y,col_length):
     return y-1 - (x-1) * col_length
 
-# lets create a dictionary of surrounding index positions for each item in the list, so you can quickly check them later with numpy
-# a = np.arry[list items]
-# b = [1, 2, 5]
-# list(a[b])
-
 
 def extend_map(orig_array, col_length):
     # this function creates map with a border around it with opposing postions (like a pacman-field where each end
     extended_map = []
-    # the row above the map
-    extended_map.append([len(orig_array)] + orig_array[-col_length:] + orig_array[-col_length])
     # add each row with the end position in front and the first position at the end
-    for i in range(0,len(orig_array // col_length)):
-        row = [col_length * i] + orig_array[col_length*i:(col_length*i-1)] + orig_array[col_length * i + col_length -1]
+
+    for i in range(0,col_length):
+        row = [col_length * (i + 1) -1]
+        row.extend(orig_array[col_length*i:(col_length*i+col_length)])
+        row.append(orig_array[col_length * i])
         extended_map.append(row)
-    extended_map.append([col_length] + orig_array[-col_length:] + orig_array[-col_length])
     # returns list in the form of [[row(n)], [row(1)]...[row(n-1)],[row(n)], [row(1)]]
+    # adds the first row at the and, and likewise the last row in front
+    extended_map.insert(len(extended_map),extended_map[0])
+    extended_map.insert(0,extended_map[-2])
+
     return extended_map
 
 
@@ -65,27 +56,30 @@ def dict_from_list(extended_list:list):
     """
 
     surr_pos_dict = dict()
-    for row in extended_list[1:-1]:
-        for value in row[1:-1]:
-            above = [extended_list[row-1][value-1:value+1]]
-            lr = [extended_list[row][value-1],extended_list[row][value+1]]
-            below = [extended_list[row+1][value-1:value+1]]
-            surr_pos_dict[str(value)] = above + lr + below
-
+    for i in range(1,len(extended_list)-1):
+        # i = column pos, j = row pos
+        for j in range(1, len(extended_list[i])-1): #minus two, bc the first and last dont count
+            above = extended_list[i-1][j-1:j+2]
+            lr = [extended_list[i][j-1], extended_list[i][j+1]]
+            below = extended_list[i+1][j-1:j+2]
+            surr_pos_dict[str(extended_list[i][j])] = above + lr + below
     return surr_pos_dict
 
 
-def update_field(index_pos:int,board, pos_dict:dict):
-    # the board is a numpy array and the posi tions to get come from a dictionary
-    surrounding = pos_dict[i]
+def update_field(index_pos,board, pos_dict:dict):
+    # the board is a numpy array and the positions to get come from a dictionary
+    index_pos = str(index_pos)
+    surrounding = pos_dict[index_pos]
     # using a list to get positions is possible bc its a numpy array
     surrounding = board[surrounding]
-    if board[index_pos] == 1 and 1 < surrounding.count(1) < 4:
+    index_pos = int(index_pos)
+    if board[index_pos] == 1 and 1 < np.count_nonzero(surrounding == 1) < 4:
         return 1
     elif board[index_pos] == 1:
         # the condition that the surrounding count has to be anything else than 2 or 3
         return 0
-    if surrounding.count(1) == 3:
+    # if surrounding.count(1) == 3
+    if np.count_nonzero(surrounding == 1) == 3:
         # all dead cells with 3 live neighbors come to life. Bc the previous condition filtered all the
         # instances with live fields, this doesn't a statement to check for it.
         return 1
@@ -94,14 +88,25 @@ def update_field(index_pos:int,board, pos_dict:dict):
         return 0
 
 
-def main():
+def create_matrix(array1d, col, row):
+    twod_matrix = np.reshape(array1d, (row, col))
+    return twod_matrix
 
+
+def update_graph(graph_name, data):
+    graph_name.matshow(data)
+    plt.draw()
+    plt.show()
+    plt.pause(.1)
+
+
+def main():
     parser = argparse.ArgumentParser(description=descStr)
     # lets user select boardsize
-    parser.add_argument('b', '--boardsize', type=int, default=(9, 9), required=False,
+    parser.add_argument('-b', '--boardsize', type=int, default=(9, 9), required=False,
                         help="b: boardsize, m:If user selects manual the program asks for positions")
     # lets user input custom positions
-    parser.add_argument('m', '--manual', nargs=1, required=False,
+    parser.add_argument('-m', '--manual', nargs=1, required=False,
                         help="m:If user selects manual the program asks for positions")
     args = parser.parse_args()
 
@@ -127,4 +132,33 @@ def main():
             i = convert_coordinates(item[0], item[1], col_len)
             board[i] = 1
     else:
-        board = random_bin_array(PERCENTAGE_ALIVE*total_size,total_size)
+        board = random_bin_array(round(PERCENTAGE_ALIVE*total_size),total_size)
+
+    pos_board = np.arange(len(board))
+    border_map = extend_map(pos_board,col_len)
+    pos_dict = dict_from_list(border_map)
+
+    matrix = create_matrix(board, col_len, row_len)
+
+    # First view of the board
+    plt.ion()
+    board_view = plt.figure()
+    graph1 = board_view.add_subplot(111)
+    graph1.matshow(matrix)
+    plt.draw()
+    plt.show()
+    plt.pause(.1)
+
+    while True:
+        new_board = []
+        for ix in range(len(board)):
+            new_board = np.append(new_board,update_field(ix, board,pos_dict))
+        board = new_board
+
+        time.sleep(1)
+        matrix = create_matrix(board, col_len, row_len)
+        update_graph(graph1, matrix)
+
+
+if __name__ == '__main__':
+    main()
