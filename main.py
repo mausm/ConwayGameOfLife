@@ -103,7 +103,7 @@ def update_graph(graph_name, data):
 def main():
     parser = argparse.ArgumentParser(description=descStr)
     # lets user select boardsize
-    parser.add_argument('-b', '--boardsize', type=int, default=(9, 9), required=False,
+    parser.add_argument('-b', '--boardsize', type=str, default=(9, 9), required=False,
                         help="b: boardsize, m:If user selects manual the program asks for positions")
     # lets user input custom positions
     parser.add_argument('-m', '--manual', nargs=1, required=False,
