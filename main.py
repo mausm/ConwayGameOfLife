@@ -111,9 +111,17 @@ def main():
     args = parser.parse_args()
 
     PERCENTAGE_ALIVE = 0.25
-    col_len, row_len = args.boardsize
-    total_size = col_len * row_len
+    
+    if args.boardsize:
+        boardsize_arg = str(args.boardsize)
+        boardsize_arg = boardsize_arg.split(",")
+        col_len = int(boardsize_arg[0])
+        row_len = int(boardsize_arg[1])
+    else:
+        col_len, row_len = args.boardsize       
 
+    total_size = col_len * row_len
+              
     if args.manual:
         on_positions = []
         while True:
