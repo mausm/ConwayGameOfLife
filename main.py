@@ -16,11 +16,11 @@ def add_shape(x:int, y:int, shapename:str, col_len):
         "toad": ([3,3,3,4,4,4],[3,4,5,2,3,4]),
         "beacon": ([2,2,3,4,5,5],[2,3,2,5,4,5])
     }
-
-    shape = shape_dict.get(shapename.lower())
+    shapename = shapename.lower()
+    shape = shape_dict.get(shapename)
     list_positions = []
     for i in range(len(shape[0])):
-        index_pos = convert_coordinates(shape[0][i] + x, shape[1][i], col_len + y)
+        index_pos = convert_coordinates(shape[0][i] + x, shape[1][i] + y, col_len)
         list_positions.append(index_pos)
 
     return list_positions
@@ -133,7 +133,7 @@ def main():
     # lets user input custom positions
     parser.add_argument('-m', '--manual', nargs=1, required=False,
                         help="m:If user selects manual the program asks for positions")
-    parser.add_argument('-d', '--demo', nargs=1, required=False,
+    parser.add_argument('-d', '--demo', required=False, action="store_true",
                         help="d: if user enters 'd', he can insert pre-made forms")
 
     args = parser.parse_args()
@@ -172,14 +172,16 @@ def main():
                 print("Possible shapes: blinker toad beacon")
                 selection = input("Enter one of the shapes: ")
                 print("max x: {col} and max y: {row}".format(col=col_len, row=row_len))
-                x,y = input("Enter the x and y coordinates separated with a comma: ").split()
+                userinput = input("Enter the x and y coordinates separated with a comma: ").split(",")
+                x = int(userinput[0])
+                y = int(userinput[1])
                 if x < col_len - 6 and y < row_len - 6:
                     # minus 6 because the shapes need some space
                     places_to_fill = add_shape(x, y, selection, col_len)
                     board[places_to_fill] = 1
                 else:
                     print("Please enter coordinates inside the board")
-            except KeyError:
+            except (KeyError, ValueError):
                 print("Invalid shape, please try again")
             if input("If you want to add another one, press 'c' ") != "c":
                 break
@@ -210,14 +212,12 @@ def main():
             new_board = np.append(new_board,update_field(ix, board,pos_dict))
         board = new_board
 
-        time.sleep(.1)
         matrix = create_matrix(board, col_len, row_len)
         update_graph(graph1, matrix)
 
-        if count % 50 == 0 and input("continue? y/n") == "n":
+        if count % 50 == 0 and input("continue? y/n: ") != "y":
+            plt.close()
             break
-
-
 
 
 if __name__ == '__main__':
