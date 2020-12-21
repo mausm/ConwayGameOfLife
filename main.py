@@ -7,6 +7,25 @@ descStr = "Conway's game of life:" \
        "Simulated by Python with randomized or user defined starting points"
 
 
+def add_shape(x:int, y:int, shapename:str, col_len):
+    """this function creates a number of shapes:
+    blinker, toad, beacon"""
+
+    shape_dict = {
+        "blinker": ([3,4,5], [3,3,3]),
+        "toad": ([3,3,3,4,4,4],[3,4,5,2,3,4]),
+        "beacon": ([2,2,3,4,5,5],[2,3,2,5,4,5])
+    }
+
+    shape = shape_dict.get(shapename.lower())
+    list_positions = []
+    for i in range(len(shape[0])):
+        index_pos = convert_coordinates(shape[0][i] + x, shape[1][i], col_len + y)
+        list_positions.append(index_pos)
+
+    return list_positions
+
+
 def create_array(col_len, row_len):
     return np.array([0]*col_len*row_len)
 
@@ -43,6 +62,12 @@ def extend_map(orig_array, col_length):
 def dict_from_list(extended_list:list):
     # create a dictionary for each position with the surrounding 8 positions, so it can be referenced quickly
     """for example a 3*3 board 0-8 looks like this:
+    Original board:
+     [0,1,2]
+     [3,4,5]
+     [6,7,8]
+
+    Extend_list:
     [[8,6,7,8,6],
      [2,0,1,2,0],
      [5,3,4,5,3],
@@ -103,25 +128,26 @@ def update_graph(graph_name, data):
 def main():
     parser = argparse.ArgumentParser(description=descStr)
     # lets user select boardsize
-    parser.add_argument('-b', '--boardsize', type=str, default=(9, 9), required=False,
-                        help="b: boardsize, m:If user selects manual the program asks for positions")
+    parser.add_argument('-b', '--boardsize', type=str, default="50,50", required=False,
+                        help="b: boardsize, insert it like nr,nr for example: 10,10 ")
     # lets user input custom positions
     parser.add_argument('-m', '--manual', nargs=1, required=False,
                         help="m:If user selects manual the program asks for positions")
+    parser.add_argument('-d', '--demo', nargs=1, required=False,
+                        help="d: if user enters 'd', he can insert pre-made forms")
+
     args = parser.parse_args()
 
-    PERCENTAGE_ALIVE = 0.25
-    
+    PERCENTAGE_ALIVE = 0.3
     if args.boardsize:
-        boardsize_arg = str(args.boardsize)
-        boardsize_arg = boardsize_arg.split(",")
+        boardsize_arg = str(args.boardsize).split(",")
         col_len = int(boardsize_arg[0])
         row_len = int(boardsize_arg[1])
     else:
-        col_len, row_len = args.boardsize       
+        col_len, row_len = args.boardsize
 
     total_size = col_len * row_len
-              
+
     if args.manual:
         on_positions = []
         while True:
@@ -132,13 +158,32 @@ def main():
                     on_positions.append((x, y))
 
             except ValueError:
-                if input("please try again with a valid number, or press 'q' to quit: ") == 'q':
+                if input("Please try again with a valid number, or press 'q' to quit: ") == 'q':
                     break
 
         board = np.zeros(total_size)
         for item in on_positions:
             i = convert_coordinates(item[0], item[1], col_len)
             board[i] = 1
+    elif args.demo:
+        board = create_array(col_len, row_len)
+        while True:
+            try:
+                print("Possible shapes: blinker toad beacon")
+                selection = input("Enter one of the shapes: ")
+                print("max x: {col} and max y: {row}".format(col=col_len, row=row_len))
+                x,y = input("Enter the x and y coordinates separated with a comma: ").split()
+                if x < col_len - 6 and y < row_len - 6:
+                    # minus 6 because the shapes need some space
+                    places_to_fill = add_shape(x, y, selection, col_len)
+                    board[places_to_fill] = 1
+                else:
+                    print("Please enter coordinates inside the board")
+            except KeyError:
+                print("Invalid shape, please try again")
+            if input("If you want to add another one, press 'c' ") != "c":
+                break
+
     else:
         board = random_bin_array(round(PERCENTAGE_ALIVE*total_size),total_size)
 
@@ -157,15 +202,22 @@ def main():
     plt.show()
     plt.pause(.1)
 
+    count = 0
     while True:
+        count += 1
         new_board = []
         for ix in range(len(board)):
             new_board = np.append(new_board,update_field(ix, board,pos_dict))
         board = new_board
 
-        time.sleep(1)
+        time.sleep(.1)
         matrix = create_matrix(board, col_len, row_len)
         update_graph(graph1, matrix)
+
+        if count % 50 == 0 and input("continue? y/n") == "n":
+            break
+
+
 
 
 if __name__ == '__main__':
