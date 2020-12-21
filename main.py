@@ -144,7 +144,9 @@ def main():
         col_len = int(boardsize_arg[0])
         row_len = int(boardsize_arg[1])
     else:
-        col_len, row_len = args.boardsize
+        boardsize = args.boardsize.split(",")
+
+        col_len, row_len = int(boardsize[0]),int(boardsize[1])
 
     total_size = col_len * row_len
 
