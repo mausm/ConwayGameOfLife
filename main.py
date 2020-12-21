@@ -131,7 +131,7 @@ def main():
     parser.add_argument('-b', '--boardsize', type=str, default="50,50", required=False,
                         help="b: boardsize, insert it like nr,nr for example: 10,10 ")
     # lets user input custom positions
-    parser.add_argument('-m', '--manual', nargs=1, required=False,
+    parser.add_argument('-m', '--manual', required=False, action="store_true",
                         help="m:If user selects manual the program asks for positions")
     parser.add_argument('-d', '--demo', required=False, action="store_true",
                         help="d: if user enters 'd', he can insert pre-made forms")
