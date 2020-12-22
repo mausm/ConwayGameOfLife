@@ -139,24 +139,21 @@ def main():
     args = parser.parse_args()
 
     PERCENTAGE_ALIVE = 0.3
-    if args.boardsize:
-        boardsize_arg = str(args.boardsize).split(",")
-        col_len = int(boardsize_arg[0])
-        row_len = int(boardsize_arg[1])
-    else:
-        boardsize = args.boardsize.split(",")
+    boardsize = args.boardsize.split(",")
 
-        col_len, row_len = int(boardsize[0]),int(boardsize[1])
+    col_len = int(boardsize[0])
+    row_len = int(boardsize[1])
 
     total_size = col_len * row_len
 
     if args.manual:
         on_positions = []
         while True:
-            x, y = input("Please add an (x,y) position that should be on in form of 'x,y': ")
             try:
+                xy = input("Please add an (x,y) position that should be on in form of 'x,y': ")
+                x, y = xy.split(",")
                 x, y = int(x), int(y)
-                if 0 < x <= args.boardsize[0] and 0 < y <= args.boardsize[1]:
+                if 0 < x <= int(boardsize[0]) and 0 < y <= int(boardsize[1]):
                     on_positions.append((x, y))
 
             except ValueError:
