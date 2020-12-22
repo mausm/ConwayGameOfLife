@@ -1,7 +1,6 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import time
 
 descStr = "Conway's game of life:" \
        "Simulated by Python with randomized or user defined starting points"
